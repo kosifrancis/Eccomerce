@@ -1,4 +1,4 @@
-const Feedback = require('../models/Feedback');
+const Feedback = require('../models/feedback');
 
 const createFeedback = async (req, res) => {
     const { product, message, rating } = req.body;

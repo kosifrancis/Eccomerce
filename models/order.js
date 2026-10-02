@@ -34,8 +34,28 @@ const orderSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ['pending','shipped','delivered'],
+        enum: ['pending', 'paid', 'shipped', 'delivered', 'cancelled'],
         default: 'pending'
+    },
+
+    paymentStatus: {
+        type: String,
+        enum: ['pending', 'paid', 'failed', 'abandoned'],
+        default: 'pending'
+    },
+
+    paymentReference: {
+        type: String,
+        sparse: true,
+        index: true
+    },
+
+    paidAt: {
+        type: Date
+    },
+
+    paymentDetails: {
+        type: mongoose.Schema.Types.Mixed
     },
 
     createdAt: {
@@ -44,4 +64,4 @@ const orderSchema = new mongoose.Schema({
     }
 });
 
-module.expoerts = mongoose.model('Order', orderSchema)
+module.exports = mongoose.models.Order || mongoose.model('Order', orderSchema);

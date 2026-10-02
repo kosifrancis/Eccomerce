@@ -8,4 +8,4 @@ const userSchema = new mongoose.Schema({
     role:{type:String,enum:["buyer","seller"],default:"buyer"}
 });
 
-module.exports = mongoose.model("User",userSchema);
+module.exports = mongoose.models.User || mongoose.model("User", userSchema);

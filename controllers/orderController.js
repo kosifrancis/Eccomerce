@@ -1,5 +1,5 @@
-const Cart = require('../models/Cart');
-const Order = require('../models/Order');
+const Cart = require('../models/cart');
+const Order = require('../models/order');
 
 const checkout = async (req, res) => {
     try {

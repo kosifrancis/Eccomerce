@@ -4,6 +4,7 @@ const {
     createProduct,
     getProducts,
     getProduct,
+    getSellerProducts,
     updateProduct
 } = require('../controllers/productController');
 
@@ -26,6 +27,18 @@ const asyncHandler = (handler) => (req, res, next) => {
     }
 };
 
+// Flexible middleware: verifies token if present, allows guest or any authenticated role to view products
+const allowBrowsing = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) {
+        return next();
+    }
+    authenticateToken(req, res, (err) => {
+        if (err) return next();
+        next();
+    });
+};
+
 // UPLOAD PRODUCT IMAGE — SELLER ONLY
 router.post(
     '/upload-image',
@@ -43,6 +56,14 @@ router.post(
     asyncHandler(createProduct)
 );
 
+// GET SELLER OWN PRODUCTS — SELLER ONLY
+router.get(
+    '/seller/mine',
+    asyncHandler(authenticateToken),
+    asyncHandler(requireSellerRole),
+    asyncHandler(getSellerProducts)
+);
+
 // UPDATE PRODUCT — SELLER ONLY
 router.put(
     '/:id',
@@ -51,21 +72,17 @@ router.put(
     asyncHandler(updateProduct)
 );
 
-// GET PRODUCTS — BUYER ONLY
+// GET PRODUCTS — PUBLIC, BUYER & SELLER BROWSING
 router.get(
     '/',
-    asyncHandler(authenticateToken),
-    asyncHandler(requireBuyerRole),
+    allowBrowsing,
     asyncHandler(getProducts)
-    
-);
-router.get(
-    '/:id',
-    asyncHandler(authenticateToken),
-    asyncHandler(requireBuyerRole),
-    asyncHandler(getProduct)
-    
 );
 
+router.get(
+    '/:id',
+    allowBrowsing,
+    asyncHandler(getProduct)
+);
 
 module.exports = router;

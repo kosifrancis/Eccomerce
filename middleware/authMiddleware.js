@@ -16,6 +16,10 @@ const authenticateToken = (req, res, next) => {
         const user = jwt.verify(token, secret);
 
         req.user = user;
+        const uid = user.userId || user.id || user._id;
+        req.user.id = uid;
+        req.user.userId = uid;
+        req.user.user = { id: uid, userId: uid };
 
         next();
     } catch (error) {

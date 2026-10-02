@@ -4,8 +4,10 @@ const {
     loginUser,
     forgotPassword,
     verifyOtp,
-    setNewPassword
+    setNewPassword,
+    getCurrentUser
 } = require('../controllers/authController');
+const authenticateToken = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -15,5 +17,6 @@ router.post('/forgot-password', forgotPassword);
 router.post('/verify-otp', verifyOtp);
 router.post('/set-new-password', setNewPassword);
 router.post('/reset-password', setNewPassword);
+router.get('/me', authenticateToken, getCurrentUser);
 
 module.exports = router;

@@ -1,8 +1,8 @@
-const User = require('../models/User');
+const User = require('../models/user');
 const Otp = require('../models/otp');
 const jwt = require('jsonwebtoken');
-
 const bcrypt = require('bcrypt');
+const { sendPasswordResetEmail } = require('../services/emailService');
 
 function generateDynamicOTP(length = 6) {
     let digits = '0123456789';
@@ -104,7 +104,26 @@ const forgotPassword = async (req, res) => {
 
         console.log(`Generated OTP for ${email}: ${otpCode}`);
 
-        res.status(200).json({ message: 'OTP sent successfully' });
+        // Send email with OTP via Resend
+        const emailResult = await sendPasswordResetEmail({
+            to: user.email,
+            otp: otpCode,
+            username: user.username
+        });
+
+        if (!emailResult.success) {
+            console.warn('Resend email warning (sandbox limitation):', emailResult.error?.message || emailResult.error);
+            return res.status(200).json({
+                message: 'OTP generated successfully (Simulated email delivery)',
+                testOtp: otpCode,
+                hint: 'In test mode, Resend free tier delivers to verified accounts only.'
+            });
+        }
+
+        res.status(200).json({
+            message: 'OTP sent successfully to your email',
+            emailId: emailResult.data?.id
+        });
     } catch (error) {
         console.error('FORGOT PASSWORD ERROR:', error);
         res.status(500).json({ message: 'Error processing forgot password request', error: error.message });
@@ -242,11 +261,26 @@ const setNewPassword = async (req, res) => {
     }
 };
 
+const getCurrentUser = async (req, res) => {
+    try {
+        const userId = req.user.id || req.user.userId;
+        const user = await User.findById(userId).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ user });
+    } catch (error) {
+        console.error('GET CURRENT USER ERROR:', error);
+        res.status(500).json({ message: 'Error retrieving user profile', error: error.message });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     forgotPassword,
     verifyOtp,
     setNewPassword,
-    resetPassword: setNewPassword
+    resetPassword: setNewPassword,
+    getCurrentUser
 };
