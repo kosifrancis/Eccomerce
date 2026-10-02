@@ -99,7 +99,7 @@ const updateProduct = async (req, res) => {
             });
         }
 
-        if (String(product.seller) !== String(req.user.userId)) {
+        if (String(product.seller) !== String(req.user.user.id)) {
             return res.status(403).json({
                 message: 'Access denied. You can only update your own products.'
             });
