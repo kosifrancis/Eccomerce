@@ -438,10 +438,41 @@ const verifyPaymentStatus = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('VERIFY PAYMENT ERROR:', error);
+        console.warn('Live Paystack verification failed, checking local database record:', error.message);
+
+        // Fallback: check if order/payment exists locally
+        try {
+            const order = await Order.findOne({ paymentReference: reference });
+            const payment = await Payment.findOne({ reference });
+
+            if (order || payment) {
+                const isPaid = payment?.status === 'success' || order?.paymentStatus === 'paid';
+                return res.status(200).json({
+                    success: true,
+                    message: 'Transaction status retrieved from database record',
+                    data: {
+                        status: isPaid ? 'success' : (payment?.status || order?.paymentStatus || 'pending'),
+                        reference: reference,
+                        amount: payment ? payment.amount : (order ? order.totalPrice : 0),
+                        paidAt: payment?.paidAt || order?.paidAt,
+                        channel: payment?.channel || 'card',
+                        gatewayResponse: isPaid ? 'Successful' : 'Pending',
+                        order: order ? {
+                            id: order._id,
+                            totalPrice: order.totalPrice,
+                            status: order.status,
+                            paymentStatus: order.paymentStatus
+                        } : null
+                    }
+                });
+            }
+        } catch (dbErr) {
+            console.error('Database fallback error:', dbErr.message);
+        }
+
         return res.status(error.statusCode || 500).json({
             success: false,
-            message: 'Failed to verify transaction',
+            message: 'Failed to verify transaction with Paystack',
             error: error.message
         });
     }
